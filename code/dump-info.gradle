@@ -1,0 +1,12 @@
+class DumpEnv implements Plugin<Project> {
+    void apply(Project project) {
+        project.tasks.create("systemInfo")
+        project.tasks.systemInfo.doLast {
+            println System.env.collect { k, v ->
+                "$k = $v"
+            }.join("\n")
+        }
+    }
+}
+
+apply plugin: DumpEnv

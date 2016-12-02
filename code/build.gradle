@@ -1,0 +1,78 @@
+plugins {
+    id "nebula.ospackage" version "4.1.0"
+}
+
+apply plugin: 'cpp'
+
+buildDir = 'build'
+
+model {
+    components {
+        app(NativeExecutableSpec) {
+            sources.cpp.source {
+                srcDir "src"
+                include "**/*.cpp"
+            }
+        }
+    }
+}
+
+model {
+    buildTypes {
+        debug
+        release
+    }
+    components {
+        app {
+            binaries.each {
+                if (buildType == buildType.debug)
+                    cppCompiler.args << "-O0" << "-g"
+                else
+                    cppCompiler.args << "-O3"
+            }
+        }
+    }
+}
+
+model {
+    platforms {
+        linux
+        mac
+    }
+    components {
+        app {
+            targetPlatform "linux"
+            targetPlatform "mac"
+        }
+    }
+}
+
+model {
+    toolChains {
+        gcc(Gcc) {
+            target("linux")
+        }
+        clang(Clang) {
+            target("mac")
+        }
+    }
+}
+
+task run {
+    dependsOn "installAppLinuxReleaseExecutable"
+    doLast {
+        def installTask = tasks["installAppLinuxReleaseExecutable"]
+        exec {
+            executable installTask.executable
+        }
+    }
+}
+
+task pack(type: Deb) {
+    packageName = "app"
+    version = "1.2.3"
+    dependsOn "installAppLinuxReleaseExecutable"
+    from("$buildDir/install/app/linux/release") {
+        into "/bin"
+    }
+}
